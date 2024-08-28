@@ -1,15 +1,28 @@
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2'; // import ec2 library 
-import * as iam from '@aws-cdk/aws-iam'; // import iam library for permissions
-import * as r53 from "@aws-sdk/client-route-53";
-import * as aws from "aws-sdk";
+/*
+ * Copyright [first edit year]-[latest edit year] Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
+ * except in compliance with the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under the License.
+ */
 
-import * as fs from 'fs'
-import { InstanceClass, InstanceSize } from '@aws-cdk/aws-ec2';
-import { Tags } from '@aws-cdk/core';
+import * as cdk from 'aws-cdk-lib';
+import { aws_ec2 as ec2, aws_iam as iam,aws_cloudwatch as cloudwatch, aws_events as events, aws_events_targets as targets  } from 'aws-cdk-lib';
+import { Construct } from "constructs";
+import * as r53 from "@aws-sdk/client-route-53";
+import * as fs from 'fs';
+import { InstanceClass, InstanceSize } from 'aws-cdk-lib/aws-ec2';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { Tags } from 'aws-cdk-lib';
 import * as os from 'os';
 import { GetHostedZoneCommand, GetHostedZoneCommandInput } from '@aws-sdk/client-route-53';
-import { SelfDestruct } from 'cdk-time-bomb';
+// import { SelfDestruct } from 'cdk-time-bomb'; // Assuming cdk-time-bomb is compatible with CDK v2
+import { SelfDestructLambda } from '../lib/self-destruct-stack';
 
 interface Config {
   stackName: string,
@@ -23,38 +36,61 @@ interface Config {
   domainName: string,
   userDataFile: string
   cdkOut: string,
-  timeBomb: string
+  timeBomb: number
+  vpcId: string,
+  sshPublicKey: string
 }
 
-const config: Config = require('../configs/config.json');
+
+const config: Config = require('../configs/.config.json'); //TODO Update this to your env file
 const defaultUserData: string = "./userdata/user_script.sh";
 config.userDataFile = config.userDataFile.replace(/^~/, os.homedir());
 console.log("using configuration: ", config);
 
 export class SingleEc2Stack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     console.log("keyName: ", config.keyName);
     console.log("ec2Name: ", config.ec2Name);
 
-    const defaultVpc = ec2.Vpc.fromLookup(this, 'VPC', { isDefault: true });
+    const defaultVpc = ec2.Vpc.fromLookup(this, 'VPC', {vpcId: config.vpcId });
 
     // OPTIONAL self destruct - disabled if config.timeBomb is 0, otherwise in minutes
-    if (config.timeBomb != "0") {
-
-      const selfDestruct = new SelfDestruct(this, "selfDestructor", {
-        timeToLive: cdk.Duration.minutes(60)
+    if (config.timeBomb !== 0) {
+      const selfDestructLambda = new lambda.Function(this, 'SelfDestructLambda', {
+        runtime: lambda.Runtime.PYTHON_3_9,
+        code: lambda.Code.fromInline(`
+import boto3
+def handler(event, context):
+    cloudformation = boto3.client('cloudformation')
+    cloudformation.delete_stack(StackName='${this.stackName}')
+        `),
+        handler: 'index.handler',
+        environment: {
+          STACK_NAME: this.stackName,
+        },
       });
 
-      defaultVpc.node.addDependency(selfDestruct);
-    }
+      const rule = new events.Rule(this, 'SelfDestructRule', {
+        schedule: events.Schedule.rate(cdk.Duration.minutes(config.timeBomb)),
+      });
+      rule.addTarget(new targets.LambdaFunction(selfDestructLambda));
+
+    //   const selfDestruct = new SelfDestruct(this, "selfDestructor", {
+    //     timeToLive: cdk.Duration.minutes(60)
+    //   });
+
+    //   defaultVpc.node.addDependency(selfDestruct);
+    // }
+  }
 
     const role = new iam.Role(
       this,
       config.ec2Name + '-role',
       { assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com') }
     )
+    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"));
     const dnsPolicyDoc = new iam.PolicyDocument({
       statements: [
         new iam.PolicyStatement({
@@ -106,10 +142,10 @@ export class SingleEc2Stack extends cdk.Stack {
     )
 
     // open the SSH port
-    securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(22),
-    )
+    // securityGroup.addIngressRule(
+    //   ec2.Peer.anyIpv4(),
+    //   ec2.Port.tcp(22),
+    // )
     /* Uncomment this block if you plan on exposing any standard web server
     securityGroup.addIngressRule(
       ec2.Peer.anyIpv4(),
@@ -137,7 +173,7 @@ export class SingleEc2Stack extends cdk.Stack {
       machineImage: ec2.MachineImage.latestAmazonLinux({
         generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
       }),
-      keyName: config.keyName,
+      // keyName: config.keyName,
       blockDevices: [
         {
           deviceName: '/dev/xvda',
@@ -170,12 +206,12 @@ export class SingleEc2Stack extends cdk.Stack {
     Tags.of(instance).add('keyFile', config.keyFile);
     Tags.of(instance).add('hostedZoneID', config.hostedZoneID);
     Tags.of(instance).add('domainName', config.domainName);
-    Tags.of(instance).add('timeBomb', config.timeBomb);
+    // Tags.of(instance).add('timeBomb', config.timeBomb);
     Tags.of(instance).add('ec2Name', config.ec2Name);
 
-    new cdk.CfnOutput(this, 'ec2-instance-ip-address', {
-      value: instance.instancePublicIp
-    })
+    // new cdk.CfnOutput(this, 'ec2-instance-ip-address', {
+    //   value: instance.instancePublicIp
+    // })
     new cdk.CfnOutput(this, 'ec2-instance-id', {
       value: instance.instanceId
     })
@@ -184,19 +220,21 @@ export class SingleEc2Stack extends cdk.Stack {
     })
 
     let localUserData: string = fs.readFileSync(defaultUserData, 'utf8');
+    const sshPublicKeyCommand = `mkdir -p  /home/ssm-user/.ssh; echo "${config.sshPublicKey}" >> /home/ssm-user/.ssh/authorized_keys`;
+    localUserData += `\n${sshPublicKeyCommand}\n`;
 
     // handle DNS, if and only if the config file specifies a zone
-    if (config.hostedZoneID) {
-      const zoneName = verifyHostedZone(config.hostedZoneID, config.ec2Name);
-      if (zoneName) {
-        localUserData = localUserData.replace("ZONE_ID", config.hostedZoneID);
-        localUserData = localUserData.replace("ZONE_NAME", config.ec2Name + zoneName);
-      } else {
-        console.log("DNS name not set due to error obtaining hosted zone information");
-      }
-    } else {
-      console.log("DNS name not set");
-    }
+    // if (config.hostedZoneID) {
+    //   const zoneName = verifyHostedZone(config.hostedZoneID, config.ec2Name);
+    //   if (zoneName) {
+    //     localUserData = localUserData.replace("ZONE_ID", config.hostedZoneID);
+    //     localUserData = localUserData.replace("ZONE_NAME", config.ec2Name + zoneName);
+    //   } else {
+    //     console.log("DNS name not set due to error obtaining hosted zone information");
+    //   }
+    // } else {
+    //   console.log("DNS name not set");
+    // }
     var userData: string = "";
     if (config.userDataFile) {
       userData = fs.readFileSync(config.userDataFile, 'utf8');

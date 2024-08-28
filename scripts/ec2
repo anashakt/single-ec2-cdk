@@ -7,12 +7,12 @@ NICKNAME=`jq -r .nickName configs/config.json`
 if [ $1 == "status" ]; then
     echo "ec2 instance $INSTANCEID nicknamed $NICKNAME is $RUNSTATE" at IP Address $IP_ADDRESS
     exit 0
-fi    
+fi
 if [ $1 == "start" ]; then
     if [ $RUNSTATE == "stopped" ]; then
         aws ec2 start-instances --instance-ids "$INSTANCEID"
         exit 0
-    else 
+    else
         echo "ec2 instance $INSTANCEID nicknamed $NICKNAME is not in stopped state so cannot be started (check status first)"
         exit 0
     fi
@@ -21,9 +21,8 @@ if [ $1 == "stop" ]; then
     if [ $RUNSTATE == "running" ]; then
         aws ec2 stop-instances --instance-ids "$INSTANCEID"
         exit 0
-    else 
+    else
         echo "ec2 instance $INSTANCEID nicknamed $NICKNAME is not in running so cannot be stopped (check status first)"
         exit 0
     fi
 fi
-

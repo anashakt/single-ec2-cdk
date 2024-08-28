@@ -1,0 +1,92 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: check-json
+      - id: check-yaml
+        exclude: ".*/?eksa.*|templates/infrastructure/.*"
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: detect-aws-credentials
+        args:
+          - --allow-missing-credentials
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  # - repo: https://github.com/syntaqx/git-hooks
+  #   rev: v0.0.18
+  #   hooks:
+  #     - id: shfmt
+  #       args: ["-i", "2", "-ci", "-sr", "-s", "-w"]
+  #     - id: shellcheck
+
+  - repo: https://github.com/awslabs/automated-security-helper.git
+    rev: "v1.3.3"
+    hooks:
+      - id: ash
+        name: Scan files using ash
+        stages: [manual]
+        always_run: false
+        pass_filenames: false
+        # uncomment the line below if using "finch" on MacOS
+        # args: [ "-f" ]
+        # file types using C style /* */ block comments
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.1
+    hooks:
+      # file types using the "#" style comments
+      - id: insert-license
+        files: \.(tf|py|yml|yaml|gitignore|ini|npmignore|prettierignore|sample|sh|toml)$
+        exclude: > # Use the ">" character for a folded block scalar in YAML
+          (?x)
+          ^(
+            .pre-commit-config.yaml|
+            (^.*\.lock$)|
+            config/env(/.*|$)|
+            templates/infrastructure/.*
+          )$
+        args:
+          - --license-filepath
+          - LICENSE-header.txt
+          - --comment-style
+          - "#"
+          - --use-current-year
+          - --detect-license-in-X-top-lines=5
+          # - --remove-header # this arg is useful when you want to remove all headers
+
+      # file types using C style /* */ block comments
+      - id: insert-license
+        files: \.(java|c|cpp|js|ts|ts_bck|css)$
+        exclude: ^examples/java/no_header.java$ # use single line if the regex is simple
+        args:
+          - --license-filepath
+          - LICENSE-header.txt
+          - --comment-style
+          - "/*| *| */"
+          - --use-current-year
+          - --detect-license-in-X-top-lines=5
+
+      # file types using C++ style // line comments
+      - id: insert-license
+        files: \.(go)$
+        exclude: ^$
+        args:
+          - --license-filepath
+          - LICENSE-header.txt
+          - --comment-style
+          - "//"
+          - --use-current-year
+          - --detect-license-in-X-top-lines=5
+
+      # file types using HTML style comments
+      - id: insert-license
+        files: \.(md|html)$
+        exclude: ^$
+        args:
+          - --license-filepath
+          - LICENSE-header.txt
+          - --comment-style
+          - "<!--|  ~|  -->"
+          - --use-current-year
+          - --detect-license-in-X-top-lines=5

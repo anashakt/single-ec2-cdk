@@ -9,6 +9,3 @@ if [ $AWSCREDS == "" ]; then
 fi
 scp -r "$AWSCREDSVAR" $TARGET
 scp -r "$AWSCREDS" $TARGET
-
-
-

@@ -1,13 +1,29 @@
-import { expect as expectCDK, matchTemplate, MatchStyle } from '@aws-cdk/assert';
-import * as cdk from '@aws-cdk/core';
+/*
+ * Copyright [first edit year]-[latest edit year] Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
+ * except in compliance with the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under the License.
+ */
+
+import { Template, Match } from 'aws-cdk-lib/assertions';
+import * as cdk from 'aws-cdk-lib';
 import * as SingleEc2 from '../lib/single-ec2-stack';
 
 test('Empty Stack', () => {
   const app = new cdk.App();
   // WHEN
-  const stack = new SingleEc2.SingleEc2Stack(app, 'MyTestStack');
+  const stack = new SingleEc2.SingleEc2Stack(app, 'EC2DevStack');
   // THEN
-  expectCDK(stack).to(matchTemplate({
+  const template = Template.fromStack(stack);
+
+  template.hasResourceProperties('AWS::EC2::Instance', {});
+  template.templateMatches({
     "Resources": {}
-  }, MatchStyle.EXACT))
+  })
 });

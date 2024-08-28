@@ -7,7 +7,7 @@
     "keyName": "<name of the EC2 key to be used>",
     "keyFile": "<filename for the EC2 key pem file>",
     "hostedZoneID": "<hosted zone id from Route53 - leave emptty to disable>",
-    "domainName": "<domain name associated with that hosted zone", 
+    "domainName": "<domain name associated with that hosted zone",
     "userDataFile": "<additional script to be appended to and run on EC2 creation - 'peruser-example' file is an example>",
     "cdkOut": "cdk-outputs.json",
     "timeBomb": "0",

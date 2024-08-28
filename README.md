@@ -1,9 +1,22 @@
+<!--
+  ~ Copyright [first edit year]-[latest edit year] Amazon.com, Inc. or its affiliates. All Rights Reserved.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
+  ~ except in compliance with the License. A copy of the License is located at
+  ~
+  ~     http://aws.amazon.com/apache2.0/
+  ~
+  ~ or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+  ~ BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  ~ License for the specific language governing permissions and limitations under the License.
+  -->
+
 # Single EC2 CDK Script
 
 This is a simple CDK project that creates a single EC2 instance and copies a common set of tools needed for doing cloud development.  This script handles the undifferentiated heavy lifting of creating a development environment.  While other methods
 exist that give similar results from [AWS Cloud9](https://aws.amazon.com/cloud9/) and  [Amazon WorkSpaces](https://www.amazonaws.cn/en/workspaces/), neither of those automatically installs the entire development environment and pre-configures it for access with a remote editor.  This solution fully automates the creation of your entire development environment.  This solution makes creation of a new AWS Elastic Computing (EC2) instance easy and fully repeatable: you can dispose of and re-create your development environment on demand.
 
-The example config (in 'configs/config.json.example') uses a t3 micro instance type by default and installs a userdata script at userdata/user_script.sh.  You can add user-specific commands to that by adding a pointer to another file.  
+The example config (in 'configs/config.json.example') uses a t3 micro instance type by default and installs a userdata script at userdata/user_script.sh.  You can add user-specific commands to that by adding a pointer to another file.
 
 You do need to specify an SSH key name and pem file.  You can optionally set the DNS name and Amazon Route53 ZoneID and AWS Cloud Development Kit (CDK) will update that for you on every EC2 boot.
 
@@ -11,7 +24,7 @@ You should realize that deploying this will incur charges for the EC2 instance f
 
 ## Why Would You Need This?
 
-It is especially useful to have an easily available linux server on demand in the cloud.  When you don't need it, you can stop it or even delete it, and recreate it whenever needed.  This is especially useful to to rapid testing on a "clean" linux box, perhaps to ensure that your "new install scripts" work properly, or perhaps because software you installed for another project is not compatible with the work you need to do next.  Or maybe you are working through how to learn something and you don't want to risk polluting your primary development machine.  Or maybe 
+It is especially useful to have an easily available linux server on demand in the cloud.  When you don't need it, you can stop it or even delete it, and recreate it whenever needed.  This is especially useful to to rapid testing on a "clean" linux box, perhaps to ensure that your "new install scripts" work properly, or perhaps because software you installed for another project is not compatible with the work you need to do next.  Or maybe you are working through how to learn something and you don't want to risk polluting your primary development machine.  Or maybe
 you want to follow the steps in an AWS blog or workshop and you want to make sure your own development tools don't conflict.  Any time you need a "clean" linux box for something!  You can even have multiple EC2 instances, one per project, all set up exactly how you need for a specific project.  Just clone this repo into different sub-directories and customize each one.
 
 The challenge of just starting an EC2 server is the initial installation and configuration of basic tools.  This project enables full automation of that.  The default userdata script installs the most up to date AWS Command Line Interface (CLI) and a common set of tools.  You can easily extend that script to create users and install softare in that users home directory.  Please see 'userdata/example' for a template.  Both of these are easily extensible.  A full description of this is included below.
@@ -22,24 +35,24 @@ Please note that if you just need a development machine at a low cost, or, you w
 
 In addition to several basic tools, the following software will be installed on the target EC2 host:
 
-* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - AWS Command Line Tools 
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - AWS Command Line Tools
 * [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) - AWS Cloud Development Kit
-* [AWS Serverless Application Model (SAM)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) - Serverless Application Model command line tools 
-* [jq](https://stedolan.github.io/jq/) - command line JSON processor 
+* [AWS Serverless Application Model (SAM)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) - Serverless Application Model command line tools
+* [jq](https://stedolan.github.io/jq/) - command line JSON processor
 * [nvm](https://github.com/nvm-sh/nvm) - Node Version Manager (llows you to quickly install and use different versions of node)
 * [nodejs](https://nodejs.dev/) - Node.js
 * [npm](https://www.npmjs.com/) - Node Package Manager
 * [TypeScript](https://www.typescriptlang.org/) - Typescript
 * [yarn](https://classic.yarnpkg.com/lang/en/docs/install/) - Yarn, a modern high performance Node package management tool
- 
+
 All the software installed is open source with details provided on the listed web sites, or are installed by "yum" from the standard repositories.
-  
-You can easily expand what is installed by writing a script and setting the userDataFile config variable to point to that file.  
+
+You can easily expand what is installed by writing a script and setting the userDataFile config variable to point to that file.
 
 ## Why Not Use Cloud9 or Amazon WorkSpaces?
 
 [Cloud9](https://aws.amazon.com/cloud9/) is a great tool.  So is [Amazon WorkSpaces](https://www.amazonaws.cn/en/workspaces/).  However, some customers prefer to use tools like Visual Studio Code, or to ssh to a host and use command line tools.  Or they want to easily change
-the IAM permissions for the host.  Or most importantly, they want to create a "clean" new development environment to start a new project, or to test that their code will work properly on a clean new environment, and they don't want to manually set up that environment each time.  Netiher Cloud9 nor the Amazon WorkSpaces make that easy to do. 
+the IAM permissions for the host.  Or most importantly, they want to create a "clean" new development environment to start a new project, or to test that their code will work properly on a clean new environment, and they don't want to manually set up that environment each time.  Netiher Cloud9 nor the Amazon WorkSpaces make that easy to do.
 
 ## Using Local Docker Instead of an EC2
 
@@ -65,11 +78,11 @@ To run this CDK script to create an EC2 instance, you need to configure your AWS
 aws sts get-caller-identity
 ```
 
-You should get information about your valid AWS account if it is configured properly.  
+You should get information about your valid AWS account if it is configured properly.
 
 ## Installing Application Dependencies (Launch Host)
 
-You need to install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [jq](https://stedolan.github.io/jq/download/) and 
+You need to install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [jq](https://stedolan.github.io/jq/download/) and
 the [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm).  You can then use nvm to install the other dependendencies, like this:
 
 ```bash
@@ -82,10 +95,10 @@ An example of the commands to install using the yum package manager on linux is 
 
 ## Create and Download an EC2 Key Pair/PEM file
 
-Using the AWS console, you will need to create an [Amazon EC2 Key Pair PEM file](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and download the pem file.  Save it to a safe place on your launch host.  Some folks store it in ~/keys and others store it 
+Using the AWS console, you will need to create an [Amazon EC2 Key Pair PEM file](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and download the pem file.  Save it to a safe place on your launch host.  Some folks store it in ~/keys and others store it
 in the ~/.ssh directory.  Note the entire file path for that pem file.  You will need to the provide the filename/path in the configuration below.
 
-If you also want this CDK to automatically set a DNS record for you, you need to create a [Route53 Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html) and create a host record in that zone.  The CDK script will configure the EC2 instance userdata script to automatically set the IP address for that record every time the instance boots.  You will need to add configuration items (see below).  
+If you also want this CDK to automatically set a DNS record for you, you need to create a [Route53 Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html) and create a host record in that zone.  The CDK script will configure the EC2 instance userdata script to automatically set the IP address for that record every time the instance boots.  You will need to add configuration items (see below).
 
 ## Configuration
 
@@ -96,7 +109,7 @@ Copy the file 'configs/config.json.template' to 'configs/config.json and edit it
     "stackName": "make this what you want your stack to be named - it needs to be unique to you, per region",
     "ec2Name": "the hostname for the EC2 instance",
     "nickName": "<the name you want to show up in VS Code lists, or to use at the SSH command line>",
-    "ec2Class": "t3 (or whatever you want)", 
+    "ec2Class": "t3 (or whatever you want)",
     "ec2Size": "micro (or whatever you want)",
     "keyName": "the name of the keypair in the EC2 console",
     "keyFile": "the path/name of the pem file for the EC2 keypair",
@@ -119,7 +132,7 @@ Take a look at userdata/example:
 useradd username
 usermod -G wheel username
 # change to allow sudo in the install scripts
-echo "username ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers 
+echo "username ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 su -c 'cd ~username;git clone https://github.com/username/examplerepo' username
 su -c 'cd ~username/examplerepo;./install' username
 # change it back for safety later
@@ -129,9 +142,9 @@ sed -i.bak '/username/d' /etc/sudoers
 If you make a file like this and swap "username" for your own username then the CDK project will append this onto the userdata script.  This example adds a specific user, adds them to the wheel group (so the have sudo access on Amazon Linux) and
 then grants temporary no passwd sudo access and runs an install script from a cloned git repo.  This example grants no passwd access to enable the script to "sudo" without prompting for a password.  The script removes that setting when done per best practice.
 
-# Usage 
+# Usage
 
-Just type 'yarn install' then 'yarn deploy' to deploy the solution and add the host to your .ssh/config file to make it easy to connect.  Once deployed, "yarn prep" will copy your AWS and SSH credentials to the new instance.  You can then just ssh to the "nickname" you set in the config file.  
+Just type 'yarn install' then 'yarn deploy' to deploy the solution and add the host to your .ssh/config file to make it easy to connect.  Once deployed, "yarn prep" will copy your AWS and SSH credentials to the new instance.  You can then just ssh to the "nickname" you set in the config file.
 
 ## Deploy
 
@@ -139,13 +152,13 @@ Just type 'yarn install' then 'yarn deploy' to deploy the solution and add the h
 yarn depoy
 ```
 
-Builds and deploys the instance stack and configures your SSH config to know about the instance via the "nickname" you set. 
+Builds and deploys the instance stack and configures your SSH config to know about the instance via the "nickname" you set.
 
 ## SSH to Host
 
-You can just "ssh <nickName>" and SSH will pull the target IP and keyfile out of the .ssh/config file.  No more messing with typing out the keyfile name!   
+You can just "ssh <nickName>" and SSH will pull the target IP and keyfile out of the .ssh/config file.  No more messing with typing out the keyfile name!
 
-If your EC2 host was restarted for any reason, it will get a new IP address and your SSH config file will be incorrect.  This will manifest as the ssh command hanging and failing to connect. You can verify that the instance is available with "yarn status" and if it seems that it rebooted you can easily fix your config.  To rewrite your ssh config file, you can just run this command: 
+If your EC2 host was restarted for any reason, it will get a new IP address and your SSH config file will be incorrect.  This will manifest as the ssh command hanging and failing to connect. You can verify that the instance is available with "yarn status" and if it seems that it rebooted you can easily fix your config.  To rewrite your ssh config file, you can just run this command:
 
 ```bash
 yarn setssh
@@ -182,7 +195,7 @@ If something fails and you cannot connect using "ssh <nickname>" you can easily 
 yarn ssh
 ```
 
-This will connect you to the host by automatically setting the command line parameters for your SSH key and will connect you as "ec2-user" instead of your normal username.  This may be necessary, for example, if the extra script you configured in the userDataFile 
+This will connect you to the host by automatically setting the command line parameters for your SSH key and will connect you as "ec2-user" instead of your normal username.  This may be necessary, for example, if the extra script you configured in the userDataFile
 parameter had some kind of error that rendered your user inoperable.
 
 ## Destroy Stack
